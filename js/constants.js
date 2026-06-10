@@ -88,7 +88,7 @@ window.Game.Constants = (function() {
     const EVENTS_PER_SEASON_MIN = 8;
     const EVENTS_PER_SEASON_RANGE = 6;
     const RECENT_EVENT_MEMORY = 15;
-    const SWIPE_THRESHOLD_RATIO = 0.3; // 卡片宽度的30%作为滑动阈值
+    const SWIPE_THRESHOLD_RATIO = 0.1; // 卡片宽度的10%作为滑动阈值
 
     // --- 动画时长（ms） ---
     const FLY_ANIMATION_DURATION = 350;
