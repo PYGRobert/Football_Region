@@ -686,6 +686,80 @@
             letter-spacing: 0.3px;
         }
 
+        /* ==================== 结局全屏布局（v1.5 引导卡/结局卡占满上下区域） ==================== */
+        .game-container.game-ending-active {
+            height: 100dvh;
+            max-height: 100dvh;
+            justify-content: center;
+        }
+        .game-container.game-ending-active .stats-panel,
+        .game-container.game-ending-active .header,
+        .game-container.game-ending-active .swipe-hint {
+            display: none;
+        }
+        .game-container.game-ending-active .card-area {
+            flex: 1;
+            height: auto;
+            min-height: 0;
+        }
+        .game-container.game-ending-active .card {
+            height: 100%;
+            padding: clamp(16px, 3vh, 32px) clamp(16px, 4vw, 24px);
+            justify-content: center;
+            gap: 0;
+        }
+        /* 结局卡片内容区域：纵向自适应 */
+        .game-container.game-ending-active .card.ending-card .card-title {
+            display: none;
+        }
+        .game-container.game-ending-active .card.ending-card .card-scene-icon {
+            width: auto; height: auto;
+            flex: 0 1 auto;
+            min-height: 0;
+            margin-bottom: clamp(6px, 1.5vh, 16px);
+        }
+        .game-container.game-ending-active .card.ending-card .card-description {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            min-height: 0;
+        }
+        .game-container.game-ending-active .ending-title-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-height: 100%;
+            overflow: hidden;
+        }
+        /* 球星肖像自适应容器 */
+        .game-container.game-ending-active .card-scene-icon {
+            width: auto; height: auto;
+            flex: 0 1 auto;
+            min-height: 0;
+            margin-bottom: clamp(6px, 1.5vh, 16px);
+        }
+        .game-container.game-ending-active .ending-portrait-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 1;
+            min-height: 0;
+        }
+        .game-container.game-ending-active .ending-portrait-wrap .ending-portrait {
+            width: min(152px, 38vw);
+            height: min(152px, 38vw);
+        }
+        /* 结局文字区域可滚动保护 */
+        .game-container.game-ending-active .ending-draft-text {
+            max-height: 40vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         /* ==================== 响应式 ==================== */
         @media (max-width:400px) {
             .card-area { height:340px; }
@@ -770,6 +844,17 @@
             0%,100%{ opacity:0.3; transform: translateY(0); }
             50%{ opacity:0.7; transform: translateY(-2px); }
         }
+        /* 引导卡片阶段隐藏空的icon和title */
+        .game-container.game-ending-active .card.teaser-card .card-scene-icon,
+        .game-container.game-ending-active .card.teaser-card .card-title {
+            display: none;
+        }
+        .game-container.game-ending-active .card.teaser-card .card-description {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         /* 引导卡片→结局卡片 淡入替换 (v1.5 重做) */
         .card.fade-swap-out {
             animation: fadeSwapOut 0.5s ease-in forwards;
@@ -791,6 +876,10 @@
             position:relative; overflow:hidden;
         }
         /* 结局卡片-球星肖像（通用，无球星模板时使用） */
+        .ending-portrait-wrap {
+            display:flex; align-items:center; justify-content:center;
+            width:100%; margin-bottom:8px;
+        }
         .ending-portrait {
             width:100px; height:100px;
             border-radius:50%;
