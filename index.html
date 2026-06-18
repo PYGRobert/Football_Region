@@ -7,172 +7,618 @@
     <style>
         :root {
             --bg: #0a0e14;
+            --bg-card: #0f1923;
             --card-bg: #fafaf6;
             --text: #1a1a2e;
+            --text-light: #e8e6e3;
             --gold: #c9a84c;
-            --bar-bg: rgba(255,255,255,0.12);
-            --card-border-gold: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-            --card-border-special: linear-gradient(135deg, #3498db, #8e44ad);
-            --card-border-dark: linear-gradient(135deg, #2c3e50, #000000);
+            --gold-light: #d4a82a;
+            --bar-bg: rgba(255,255,255,0.08);
+            --font-main: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', sans-serif;
+            --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
         }
+
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            font-family: var(--font-main);
             background: var(--bg);
-            background-image: radial-gradient(ellipse at 50% 30%, rgba(26,122,76,0.07) 0%, transparent 65%), radial-gradient(ellipse at 50% 80%, rgba(184,146,46,0.05) 0%, transparent 65%);
+            background-image:
+                radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(26,122,76,0.06) 0%, transparent 50%);
             min-height: 100vh; min-height: 100dvh;
             display: flex; align-items: center; justify-content: center;
             overflow: hidden; touch-action: pan-y;
             padding: 10px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
+
         .particles { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
-        .particle { position:absolute; background:rgba(255,255,255,0.03); border-radius:50%; animation:floatUp linear infinite; }
+        .particle { position:absolute; background:rgba(255,255,255,0.02); border-radius:50%; animation:floatUp linear infinite; }
         @keyframes floatUp { 0%{ transform:translateY(100vh) scale(0); opacity:0; } 10%{opacity:1;} 90%{opacity:1;} 100%{transform:translateY(-10vh) scale(1.6); opacity:0;} }
 
-        .game-container { position:relative; z-index:1; width:100%; max-width:430px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+        /* ==================== 游戏容器 ==================== */
+        .game-container {
+            position:relative; z-index:1;
+            width:100%; max-width:380px;
+            display:flex; flex-direction:column; align-items:center; gap:10px;
+        }
 
-        .header { width:100%; display:flex; align-items:center; justify-content:space-between; padding:8px 16px; background:rgba(255,255,255,0.05); border-radius:28px; backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.08); }
-        .age-badge { display:flex; align-items:center; gap:6px; color:#ccc; font-size:0.9rem; font-weight:600; }
-        .age-number { color:#fff; font-size:1.35rem; font-weight:700; }
-        .season-indicator { color: #d4a82a; font-size:0.78rem; font-weight:700; letter-spacing:1.5px; background: rgba(184,146,46,0.12); padding:4px 12px; border-radius:14px; }
+        /* ==================== 卡片区域 ==================== */
+        .card-area {
+            position:relative;
+            width:100%;
+            height:min(56vh, 420px);
+            display:flex; align-items:center; justify-content:center;
+            perspective:1000px;
+        }
 
-        .stats-panel { width:100%; display:flex; flex-direction:column; gap:6px; padding:12px 16px; background:rgba(255,255,255,0.03); border-radius:16px; backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.06); }
-        .stat-row { display:flex; align-items:center; gap:8px; }
-        .stat-icon { width:22px; font-size:0.85rem; text-align:center; flex-shrink:0; }
-        .stat-label { width:32px; font-size:0.7rem; color:#bbb; font-weight:500; flex-shrink:0; }
-        .stat-bar-outer { flex:1; height:8px; background:var(--bar-bg); border-radius:10px; overflow:hidden; }
-        .stat-bar-inner { height:100%; border-radius:10px; transition:width 0.45s cubic-bezier(0.25,0.8,0.25,1.2); }
-        .stat-bar-inner.physical { background:linear-gradient(90deg,#c0392b,#e67e22,#f0a04b); }
-        .stat-bar-inner.fame { background:linear-gradient(90deg,#8b6914,#d4a82a,#f5d978); }
-        .stat-bar-inner.team { background:linear-gradient(90deg,#1a5276,#3498db,#85c1e9); }
-        .stat-bar-inner.mood { background:linear-gradient(90deg,#5b2c6f,#8e44ad,#c39bd3); }
+        .card {
+            position:absolute;
+            width:100%; height:92%;
+            background:var(--card-bg);
+            border-radius:20px;
+            box-shadow:0 20px 60px rgba(0,0,0,0.6);
+            cursor:grab;
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            padding:clamp(20px, 4vh, 32px) clamp(16px, 4vw, 24px);
+            z-index:2;
+            transition:box-shadow 0.2s;
+            will-change:transform;
+            touch-action:none;
+            background-image:linear-gradient(180deg,#fefdfb 0%,#f5f3ed 100%);
+            border:none;
+        }
+
+        /* 普通卡片样式 - 无边框设计 */
+        .card.gold {
+            background-image: linear-gradient(180deg,#fffdf5 0%,#fff8e8 100%);
+            box-shadow: 0 20px 60px rgba(201, 168, 76, 0.3), inset 0 0 0 2px rgba(201,168,76,0.3);
+        }
+
+        .card.special {
+            background-image: linear-gradient(180deg,#f0f8ff 0%,#e8eef6 100%);
+            box-shadow: 0 20px 60px rgba(52, 152, 219, 0.3), inset 0 0 0 2px rgba(52,152,219,0.3);
+        }
+
+        .card.dark {
+            background-image: linear-gradient(180deg,#1a2a3a 0%,#0f1923 100%);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+
+        .card.dark .card-title { color: rgba(255,255,255,0.6); }
+        .card.dark .card-description { color: #fff; }
+
+        /* 结局卡片样式 */
+        .card.ending-card {
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card.ending-card .card-title {
+            color: rgba(255,255,255,0.9);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        .card.ending-card .card-description {
+            color: #fff;
+            text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+        }
+
+        .card.ending-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 40%;
+            background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .card.ending-card .ending-title-wrapper {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 结局卡片颜色变体 */
+        .card.ending-card.physical-max { background: linear-gradient(160deg, #f0a04b, #e67e22, #c0392b); }
+        .card.ending-card.physical-min { background: linear-gradient(160deg, #e74c3c, #c0392b, #962d22); }
+        .card.ending-card.fame-max { background: linear-gradient(160deg, #f5d978, #d4a82a, #8b6914); }
+        .card.ending-card.fame-min { background: linear-gradient(160deg, #d4a82a, #8b6914, #6b5210); }
+        .card.ending-card.team-max { background: linear-gradient(160deg, #85c1e9, #3498db, #1a5276); }
+        .card.ending-card.team-min { background: linear-gradient(160deg, #3498db, #1a5276, #0e3a5c); }
+        .card.ending-card.mood-max { background: linear-gradient(160deg, #c39bd3, #8e44ad, #5b2c6f); }
+        .card.ending-card.mood-min { background: linear-gradient(160deg, #8e44ad, #5b2c6f, #3d1d4e); }
+        .card.ending-card.gold { background: linear-gradient(160deg, #f1c40f, #bf953f, #8b6914); }
+        .card.ending-card.special { background: linear-gradient(160deg, #8e44ad, #3498db, #1a5276); }
+
+        .card.grabbed { box-shadow:0 28px 70px rgba(0,0,0,0.7); }
+        .card.flying-left { animation:flyLeft 0.35s cubic-bezier(0.55,0,0.9,0.5) forwards; }
+        .card.flying-right { animation:flyRight 0.35s cubic-bezier(0.55,0,0.9,0.5) forwards; }
+        .card.returning { transition:transform 0.4s cubic-bezier(0.25,0.8,0.25,1.2); transform:translateX(0) rotate(0deg)!important; }
+
+        @keyframes flyLeft {
+            0%{transform:translateX(var(--fly-start-x,0px)) rotate(var(--fly-start-r,0deg));opacity:1}
+            100%{transform:translateX(-150vw) rotate(-28deg);opacity:0}
+        }
+        @keyframes flyRight {
+            0%{transform:translateX(var(--fly-start-x,0px)) rotate(var(--fly-start-r,0deg));opacity:1}
+            100%{transform:translateX(150vw) rotate(28deg);opacity:0}
+        }
+
+        .card.entering { animation:enterCard 0.4s cubic-bezier(0.25,0.8,0.25,1.15) forwards; }
+        @keyframes enterCard {
+            0%{transform:translateY(40px) scale(0.9);opacity:0}
+            100%{transform:translateY(0) scale(1);opacity:1}
+        }
+
+        /* ==================== 卡片内容 ==================== */
+        .card-scene-icon {
+            width:clamp(80px, 22vw, 130px);
+            height:clamp(80px, 22vw, 130px);
+            margin-bottom:clamp(10px, 2.5vh, 20px);
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
+            display:flex; align-items:center; justify-content:center;
+            flex-shrink:0;
+        }
+
+        .card-scene-icon img {
+            width:100%; height:100%;
+            display:block;
+            object-fit:contain;
+        }
+
+        .card-title {
+            font-size:clamp(0.6rem, 1.5vw, 0.75rem);
+            text-transform:uppercase;
+            letter-spacing:2px;
+            color:#999;
+            margin-bottom:clamp(6px, 1.5vh, 12px);
+            font-weight:600;
+            text-align:center;
+            width:100%;
+        }
+
+        .card-description {
+            font-size:clamp(0.85rem, 2.5vw, 1.05rem);
+            text-align:center;
+            color:var(--text);
+            line-height:1.6;
+            font-weight:400;
+            flex:1;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:0 4px;
+            width:100%;
+        }
+
+        /* ==================== 选择覆盖层 ==================== */
+        .choice-overlay {
+            position: absolute; top:0; left:0;
+            width:100%; height:100%;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            z-index: 10;
+            padding: 20px;
+        }
+
+        .choice-overlay.visible { opacity: 1; }
+
+        .choice-overlay .choice-label {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            letter-spacing: 0.5px;
+        }
+
+        .choice-overlay .dots-container {
+            display: flex; gap: 16px;
+            justify-content: center;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .dot-item {
+            display: flex; flex-direction: column;
+            align-items: center; gap: 6px;
+            width: 40px;
+        }
+
+        .dot-circle {
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .dot-circle.pos { background: #2ecc71; box-shadow: 0 0 12px rgba(46,204,113,0.5); }
+        .dot-circle.neg { background: #e74c3c; box-shadow: 0 0 12px rgba(231,76,60,0.5); }
+        .dot-circle.neutral { background: #666; box-shadow: none; }
+        .dot-circle.large { width: 20px; height: 20px; }
+        .dot-circle.small { width: 14px; height: 14px; }
+
+        .dot-label {
+            font-size: 0.6rem;
+            color:rgba(255,255,255,0.6);
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        /* ==================== 属性面板（顶部） ==================== */
+        .stats-panel {
+            width:100%;
+            display:flex; flex-direction:column; gap:6px;
+            padding:10px 14px;
+            background:rgba(255,255,255,0.03);
+            border-radius:14px;
+            border:1px solid rgba(255,255,255,0.06);
+        }
+
+        .stat-row {
+            display:flex; align-items:center; gap:8px;
+        }
+
+        .stat-icon {
+            width:20px; height:20px;
+            display:flex; align-items:center; justify-content:center;
+            flex-shrink:0;
+        }
+
+        .stat-icon img {
+            width:16px; height:16px;
+            display:block;
+        }
+
+        .stat-label {
+            width:32px;
+            font-size:0.8rem;
+            color:rgba(255,255,255,0.7);
+            font-weight:600;
+            flex-shrink:0;
+        }
+
+        .stat-bar-outer {
+            flex:1; height:8px;
+            background:var(--bar-bg);
+            border-radius:10px;
+            overflow:hidden;
+        }
+
+        .stat-bar-inner {
+            height:100%;
+            border-radius:10px;
+            transition:width 0.45s cubic-bezier(0.25,0.8,0.25,1.2);
+        }
+
+        /* 体质 - 深红->橙红 */
+        .stat-bar-inner.physical { background:linear-gradient(90deg,#c0392b,#e74c3c); }
+        /* 名望 - 纯金->亮金 */
+        .stat-bar-inner.fame { background:linear-gradient(90deg,#f1c40f,#ffd700); }
+        /* 团队 - 蓝绿 */
+        .stat-bar-inner.team { background:linear-gradient(90deg,#3498db,#2ecc71); }
+        /* 情绪 - 紫粉 */
+        .stat-bar-inner.mood { background:linear-gradient(90deg,#9b59b6,#e91e8c); }
+
         .danger-low { animation:pulseDanger 0.7s infinite; }
         .danger-high { animation:pulseWarning 0.55s infinite; }
         @keyframes pulseDanger { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.7) saturate(1.6)} }
         @keyframes pulseWarning { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.35) saturate(1.35)} }
 
-        .card-area { position:relative; width:100%; height:380px; display:flex; align-items:center; justify-content:center; perspective:1000px; }
-        .card {
-            position:absolute; width:86%; height:86%; background:var(--card-bg); border-radius:20px;
-            box-shadow:0 20px 50px rgba(0,0,0,0.5); cursor:grab;
-            display:flex; flex-direction:column; align-items:center; justify-content:center;
-            padding:30px 22px 22px; z-index:2; transition:box-shadow 0.2s; will-change:transform; touch-action:none;
-            background-image:linear-gradient(180deg,#fefdfb 0%,#f5f3ed 100%);
-            border:4px solid rgba(0,0,0,0.04);
+        /* 顶部信息栏 - 紧凑设计（现在在底部） */
+        .header {
+            width:100%;
+            display:flex; align-items:baseline; justify-content:space-between;
+            padding:6px 12px;
+            background:linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04));
+            border-radius:10px;
+            border:1px solid rgba(201,168,76,0.2);
         }
-        /* 普通卡片样式 */
-        .card.gold { border: 4px solid transparent; background-image: linear-gradient(180deg,#fff 0%,#fffbf0 100%), var(--card-border-gold); background-origin: border-box; background-clip: content-box, border-box; box-shadow: 0 20px 50px rgba(201, 168, 76, 0.4); }
-        .card.special { border: 4px solid transparent; background-image: linear-gradient(180deg,#f0f8ff 0%,#e6e6fa 100%), var(--card-border-special); background-origin: border-box; background-clip: content-box, border-box; box-shadow: 0 20px 50px rgba(52, 152, 219, 0.4); }
-        .card.dark { border: 4px solid transparent; background-image: linear-gradient(180deg,#2c3e50 0%,#1a1a2e 100%), var(--card-border-dark); background-origin: border-box; background-clip: content-box, border-box; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
-        .card.dark .card-title, .card.dark .card-description, .card.dark .choice-label { color: #fff; }
 
-        /* 结局卡片样式：修复版 */
-        /*
-           修复说明：移除了 background-image 和 border 的 !important 强制覆盖。
-           现在它只设置文字颜色，具体的背景渐变由后续添加的类（如 .physical-max）控制。
-        */
-        .card.ending-card {
-            color: #fff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        .age-badge {
+            display:flex; align-items:baseline; gap:2px;
+            color:var(--text-light);
         }
-        .card.ending-card .card-title { color: rgba(255,255,255,0.9); }
-        .card.ending-card .card-description { color: #fff; }
 
-        /* 结局卡片具体颜色变体 (这些样式现在能正常生效了) */
-        .card.ending-card.physical-max { background: linear-gradient(135deg, #c0392b, #e67e22, #f0a04b); border: 4px solid rgba(255,255,255,0.1); }
-        .card.ending-card.physical-min { background: linear-gradient(135deg, #e74c3c, #c0392b); border: 4px solid rgba(255,255,255,0.1); }
-        .card.ending-card.fame-max { background: linear-gradient(135deg, #8b6914, #d4a82a, #f5d978); border: 4px solid rgba(255,255,255,0.1); }
-        .card.ending-card.fame-min { background: linear-gradient(135deg, #d4a82a, #8b6914); border: 4px solid rgba(255,255,255,0.1); }
-        .card.ending-card.team-max { background: linear-gradient(135deg, #1a5276, #3498db, #85c1e9); border: 4px solid rgba(255,255,255,0.1); }
-        .card.ending-card.team-min { background: linear-gradient(135deg, #3498db, #1a5276); border: 4px solid rgba(255,255,255,0.1); }
-        .card.ending-card.mood-max { background: linear-gradient(135deg, #5b2c6f, #8e44ad, #c39bd3); border: 4px solid rgba(255,255,255,0.1); }
-        .card.ending-card.mood-min { background: linear-gradient(135deg, #8e44ad, #5b2c6f); border: 4px solid rgba(255,255,255,0.1); }
-        .card.ending-card.gold { background: var(--card-border-gold); border: 4px solid rgba(201, 168, 76, 0.6) !important; }
-        .card.ending-card.special { background: var(--card-border-special); border: 4px solid rgba(52, 152, 219, 0.6) !important; }
+        .age-number {
+            color:#fff;
+            font-size:1.1rem; font-weight:700;
+            font-family: var(--font-mono);
+            line-height:1;
+        }
 
-        .card.grabbed { box-shadow:0 28px 60px rgba(0,0,0,0.6); }
-        .card.flying-left { animation:flyLeft 0.35s cubic-bezier(0.55,0,0.9,0.5) forwards; }
-        .card.flying-right { animation:flyRight 0.35s cubic-bezier(0.55,0,0.9,0.5) forwards; }
-        .card.returning { transition:transform 0.4s cubic-bezier(0.25,0.8,0.25,1.2); transform:translateX(0) rotate(0deg)!important; }
-        @keyframes flyLeft { 0%{transform:translateX(var(--fly-start-x,0px)) rotate(var(--fly-start-r,0deg));opacity:1} 100%{transform:translateX(-150vw) rotate(-28deg);opacity:0} }
-        @keyframes flyRight { 0%{transform:translateX(var(--fly-start-x,0px)) rotate(var(--fly-start-r,0deg));opacity:1} 100%{transform:translateX(150vw) rotate(28deg);opacity:0} }
-        .card.entering { animation:enterCard 0.4s cubic-bezier(0.25,0.8,0.25,1.15) forwards; }
-        @keyframes enterCard { 0%{transform:translateY(40px) scale(0.9);opacity:0} 100%{transform:translateY(0) scale(1);opacity:1} }
+        .age-unit {
+            color:var(--gold);
+            font-size:0.7rem; font-weight:600;
+        }
 
-        .card-scene-icon { font-size:2.8rem; margin-bottom:6px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-        .card-title { font-size:0.75rem; text-transform:uppercase; letter-spacing:2.5px; color:#999; margin-bottom:8px; font-weight:600; }
-        .card-description { font-size:1.05rem; text-align:center; color:var(--text); line-height:1.55; font-weight:500; flex:1; display:flex; align-items:center; padding:0 6px; }
+        .season-indicator {
+            color:var(--gold-light);
+            font-size:0.7rem; font-weight:600;
+        }
 
-        .choice-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(8px); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.22s ease; pointer-events: none; z-index: 10; padding: 24px 20px; }
-        .choice-overlay.visible { opacity: 1; }
-        .choice-overlay .choice-label { font-size: 1.2rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: 20px; text-shadow: 0 2px 6px rgba(0,0,0,0.6); letter-spacing: 1px; }
-        .choice-overlay .dots-container { display: flex; gap: 12px; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
-        .dot-item { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 36px; }
-        .dot-circle { border-radius: 50%; transition: all 0.2s ease; }
-        .dot-circle.pos { background: #2ecc71; box-shadow: 0 0 10px rgba(46,204,113,0.4); }
-        .dot-circle.neg { background: #e74c3c; box-shadow: 0 0 10px rgba(231,76,60,0.4); }
-        .dot-circle.neutral { background: #666; box-shadow: none; }
-        .dot-circle.large { width: 18px; height: 18px; }
-        .dot-circle.small { width: 12px; height: 12px; }
-        .dot-label { font-size: 0.65rem; color:#bbb; letter-spacing: 0.5px; font-weight: 500; }
+        .season-number {
+            font-family: var(--font-mono);
+            font-weight:700;
+            font-size:0.85rem;
+        }
 
-        .swipe-hint { color:#777; font-size:0.7rem; letter-spacing:1.5px; display:flex; align-items:center; gap:8px; transition:opacity 0.5s; }
+        /* ==================== 滑动提示 ==================== */
+        .swipe-hint {
+            color:rgba(255,255,255,0.7);
+            font-size:0.7rem;
+            letter-spacing:1px;
+            display:flex; align-items:center; gap:10px;
+            transition:opacity 0.5s;
+        }
+
+        .swipe-hint .arrow {
+            display:inline-flex; align-items:center; justify-content:center;
+            opacity:0.8;
+        }
+
+        .swipe-hint .arrow img {
+            width:18px; height:18px;
+            display:block;
+        }
+
         @keyframes bounceHorizontalLeft {
             0%,100%{transform:translateX(0)}
-            50%{transform:translateX(-7px)}
+            50%{transform:translateX(-6px)}
         }
         @keyframes bounceHorizontalRight {
             0%,100%{transform:translateX(0)}
-            50%{transform:translateX(7px)}
+            50%{transform:translateX(6px)}
         }
+
         .swipe-hint .arrow.left {
             animation:bounceHorizontalLeft 1.5s infinite;
-            font-size:0.95rem;
         }
         .swipe-hint .arrow.right {
             animation:bounceHorizontalRight 1.5s infinite;
-            font-size:0.95rem;
         }
 
-        .toast { position:fixed; top:24px; left:50%; transform:translateX(-50%) translateY(-130px); background:rgba(20,20,28,0.94); color:#f0e6d3; padding:12px 24px; border-radius:24px; font-size:0.85rem; font-weight:600; z-index:100; pointer-events:none; transition:transform 0.45s; border:1px solid rgba(255,255,255,0.18); text-align:center; max-width:88vw; }
-        .toast.show { transform:translateX(-50%) translateY(0); }
-        .toast.milestone { background:rgba(184,146,46,0.93); color:#1a1a2e; font-size:0.88rem; font-weight:700; }
+        @keyframes bounceHorizontalLeft {
+            0%,100%{transform:translateX(0)}
+            50%{transform:translateX(-6px)}
+        }
+        @keyframes bounceHorizontalRight {
+            0%,100%{transform:translateX(0)}
+            50%{transform:translateX(6px)}
+        }
 
-        /* 结局全屏遮罩层 */
-        .ending-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); z-index:200; display:flex; flex-direction:column; align-items:center; opacity:0; pointer-events:none; transition:0.6s; padding:20px; overflow-y: auto; }
+        .swipe-hint .arrow.left {
+            animation:bounceHorizontalLeft 1.5s infinite;
+        }
+        .swipe-hint .arrow.right {
+            animation:bounceHorizontalRight 1.5s infinite;
+        }
+
+        /* ==================== Toast通知 ==================== */
+        .toast {
+            position:fixed; top:20px; left:50%;
+            transform:translateX(-50%) translateY(-120px);
+            background:rgba(15,25,35,0.95);
+            color:var(--text-light);
+            padding:10px 20px;
+            border-radius:20px;
+            font-size:0.8rem; font-weight:600;
+            z-index:100;
+            pointer-events:none;
+            transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+            border:1px solid rgba(255,255,255,0.1);
+            text-align:center;
+            max-width:85vw;
+            backdrop-filter:blur(10px);
+            display:flex; align-items:center; justify-content:center; gap:4px;
+        }
+
+        .toast img {
+            width:16px; height:16px;
+            display:inline-block;
+            vertical-align:middle;
+        }
+
+        .toast.show { transform:translateX(-50%) translateY(0); }
+
+        .toast.milestone {
+            background:linear-gradient(135deg, rgba(201,168,76,0.95), rgba(212,168,42,0.95));
+            color:#1a1a2e;
+            font-size:0.85rem;
+            font-weight:700;
+            border-color:rgba(255,255,255,0.2);
+        }
+
+        /* ==================== 结局遮罩层 ==================== */
+        .ending-overlay {
+            position:fixed; top:0; left:0;
+            width:100%; height:100%;
+            background:rgba(0,0,0,0.95);
+            z-index:200;
+            display:flex; flex-direction:column;
+            align-items:center;
+            opacity:0; pointer-events:none;
+            transition:0.6s;
+            padding:20px;
+            overflow-y: auto;
+        }
+
         .ending-overlay.visible { opacity:1; pointer-events:auto; }
 
-        /* 结果展示区域 */
-        .result-screen { width: 100%; max-width: 400px; text-align: center; margin-bottom: 30px; animation: fadeIn 0.8s ease-out; display: none; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .result-screen {
+            width: 100%; max-width: 400px;
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 0.8s ease-out;
+            display: none;
+        }
 
-        .ending-icon { font-size:4rem; margin-bottom: 10px; display:block; }
-        .ending-title { font-size:1.8rem; color:#fff; font-weight:700; display:block; margin-bottom: 5px; }
-        .ending-subtitle { font-size:0.9rem; color:#ccc; text-align:center; max-width:320px; display:block; margin: 0 auto; }
-        .result-stats { font-size: 1rem; color: var(--gold); margin-bottom: 20px; margin-top: 10px; font-weight: 600; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        /* 时间线区域 */
-        .timeline-container { width: 100%; max-width: 400px; margin: 0 auto 30px auto; position: relative; padding: 20px 0; }
-        .timeline-container::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.1); transform: translateX(-50%); }
-        .timeline-item { position: relative; width: 100%; margin-bottom: 20px; opacity: 0; transform: translateY(20px); transition: all 0.5s ease; }
+        .ending-icon {
+            width:64px; height:64px;
+            margin: 0 auto 12px;
+            display:flex; align-items:center; justify-content:center;
+        }
+
+        .ending-icon img {
+            width:100%; height:100%;
+            display:block;
+            object-fit:contain;
+        }
+
+        .ending-title { font-size:1.6rem; color:#fff; font-weight:800; display:block; margin-bottom: 8px; }
+        .ending-subtitle { font-size:0.85rem; color:rgba(255,255,255,0.7); text-align:center; max-width:300px; display:block; margin: 0 auto; line-height:1.5; }
+        .result-stats { font-size: 0.9rem; color: var(--gold); margin-bottom: 20px; margin-top: 12px; font-weight: 600; }
+
+        /* ==================== 时间线 ==================== */
+        .timeline-container {
+            width: 100%; max-width: 400px;
+            margin: 0 auto 30px auto;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute; left: 50%; top: 0; bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, transparent, rgba(201,168,76,0.3), transparent);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
         .timeline-item.show { opacity: 1; transform: translateY(0); }
-        .timeline-dot { width: 12px; height: 12px; background: var(--gold); border-radius: 50%; position: absolute; left: 50%; top: 15px; transform: translateX(-50%); box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.2); z-index: 2; }
-        .timeline-content { width: 42%; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); position: relative; top: 0; }
+
+        .timeline-dot {
+            width: 10px; height: 10px;
+            background: var(--gold);
+            border-radius: 50%;
+            position: absolute; left: 50%; top: 15px;
+            transform: translateX(-50%);
+            box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.15);
+            z-index: 2;
+        }
+
+        .timeline-content {
+            width: 42%;
+            background: rgba(255,255,255,0.04);
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+            position: relative;
+        }
+
         .timeline-item:nth-child(odd) .timeline-content { margin-left: auto; }
         .timeline-item:nth-child(even) .timeline-content { margin-right: auto; }
-        .timeline-year { font-size: 0.75rem; color: var(--gold); font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
-        .timeline-text { font-size: 0.85rem; color: #ddd; line-height: 1.4; }
+
+        .timeline-year {
+            font-size: 0.65rem;
+            color: var(--gold);
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .timeline-text {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.4;
+        }
+
         .timeline-milestone { color: #fff; font-weight: 600; }
 
-        /* 重启按钮 - 初始隐藏 */
-        .restart-btn { margin-bottom: 20px; padding:14px 36px; background:var(--gold); color:#1a1a2e; border:none; border-radius:28px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow: 0 4px 15px rgba(201, 168, 76, 0.3); opacity: 0; transform: translateY(20px); transition: all 0.5s ease; }
+        /* ==================== 重启按钮 ==================== */
+        .restart-btn {
+            margin-bottom: 20px;
+            padding:12px 32px;
+            background:linear-gradient(135deg, var(--gold), var(--gold-light));
+            color:#1a1a2e;
+            border:none;
+            border-radius:24px;
+            font-size:0.9rem;
+            font-weight:700;
+            cursor:pointer;
+            box-shadow: 0 4px 20px rgba(201, 168, 76, 0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
         .restart-btn.visible { opacity: 1; transform: translateY(0); }
+        .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(201, 168, 76, 0.4); }
 
-        .ending-title-wrapper{text-align:center}
-        .ending-glow-title{font-size:2.8rem;font-weight:700;color:#fff;text-shadow:0 0 20px rgba(255,255,255,0.8),0 0 40px rgba(255,255,255,0.6);margin-bottom:15px;line-height:1.1;font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', -apple-system, sans-serif;}
-        .ending-draft-text{font-size:0.8rem;color:rgba(255,255,255,0.9);line-height:1.4;text-shadow:none;font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;padding:8px 0;margin-top:10px;font-weight: 400;letter-spacing: 0.5px;}
+        /* ==================== 结局标题 ==================== */
+        .ending-title-wrapper { text-align:center; }
 
-        @media (max-width:400px) { .card-area{height:340px} .card{padding:20px 14px 16px} .card-description{font-size:0.9rem} .card-scene-icon{font-size:2.2rem} .choice-overlay .choice-label{font-size:1rem} .dot-circle.large{width:20px;height:20px} .dot-circle.small{width:8px;height:8px} }
+        .ending-glow-title {
+            font-size:2.2rem;
+            font-weight:800;
+            color:#fff;
+            text-shadow:0 0 20px rgba(255,255,255,0.6),0 0 40px rgba(255,255,255,0.3);
+            margin-bottom:12px;
+            line-height:1.2;
+        }
+
+        .ending-draft-text {
+            font-size:0.8rem;
+            color:rgba(255,255,255,0.8);
+            line-height:1.5;
+            text-shadow:none;
+            padding:8px 0;
+            margin-top:8px;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        /* ==================== 响应式 ==================== */
+        @media (max-width:400px) {
+            .card-area { height:340px; }
+            .card { padding:20px 16px 16px; }
+            .card-description { font-size:0.9rem; }
+            .card-scene-icon { width:72px; height:72px; }
+            .choice-overlay .choice-label { font-size:1rem; }
+            .dot-circle.large { width:18px; height:18px; }
+            .dot-circle.small { width:12px; height:12px; }
+            .age-number { font-size:1.3rem; }
+        }
+
+        @media (max-height:700px) {
+            .card-area { height:320px; }
+            .game-container { gap:8px; }
+            .card-scene-icon { width:72px; height:72px; }
+        }
+
+        /* ==================== 继续游戏对话框 ==================== */
+        @keyframes dialogFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        #continueOverlay > div {
+            animation: dialogFadeIn 0.3s ease-out;
+        }
     </style>
 </head>
 <body>
@@ -180,7 +626,7 @@
 <div class="toast" id="toast"></div>
 <div class="ending-overlay" id="endingOverlay">
     <div class="result-screen" id="resultScreen">
-        <div class="ending-icon" id="endingIcon">🏆</div>
+        <div class="ending-icon" id="endingIcon"></div>
         <div class="ending-title" id="endingTitle">职业生涯结束</div>
         <div class="result-stats" id="finalStats">赛季数：0 | 事件数：0</div>
         <div class="ending-subtitle" id="endingSubtitle">你的传奇故事将被铭记</div>
@@ -191,20 +637,34 @@
 </div>
 
 <div class="game-container">
-    <div class="header">
-        <div class="age-badge"><span>👤</span> <span>年龄</span> <span class="age-number" id="ageDisplay">18</span></div>
-        <div class="season-indicator" id="seasonDisplay">🏆 第1赛季</div>
-    </div>
+    <!-- 属性面板（顶部） -->
     <div class="stats-panel">
-        <div class="stat-row"><span class="stat-icon">💪</span><span class="stat-label">体质</span><div class="stat-bar-outer"><div class="stat-bar-inner physical" id="barPhysical" style="width:60%"></div></div></div>
-        <div class="stat-row"><span class="stat-icon">⭐</span><span class="stat-label">名望</span><div class="stat-bar-outer"><div class="stat-bar-inner fame" id="barFame" style="width:28%"></div></div></div>
-        <div class="stat-row"><span class="stat-icon">🤝</span><span class="stat-label">团队</span><div class="stat-bar-outer"><div class="stat-bar-inner team" id="barTeam" style="width:45%"></div></div></div>
-        <div class="stat-row"><span class="stat-icon">❤️</span><span class="stat-label">情绪</span><div class="stat-bar-outer"><div class="stat-bar-inner mood" id="barMood" style="width:50%"></div></div></div>
+        <div class="stat-row">
+            <div class="stat-icon" id="iconPhysical"></div>
+            <span class="stat-label">体质</span>
+            <div class="stat-bar-outer"><div class="stat-bar-inner physical" id="barPhysical" style="width:60%"></div></div>
+        </div>
+        <div class="stat-row">
+            <div class="stat-icon" id="iconFame"></div>
+            <span class="stat-label">名望</span>
+            <div class="stat-bar-outer"><div class="stat-bar-inner fame" id="barFame" style="width:28%"></div></div>
+        </div>
+        <div class="stat-row">
+            <div class="stat-icon" id="iconTeam"></div>
+            <span class="stat-label">团队</span>
+            <div class="stat-bar-outer"><div class="stat-bar-inner team" id="barTeam" style="width:45%"></div></div>
+        </div>
+        <div class="stat-row">
+            <div class="stat-icon" id="iconMood"></div>
+            <span class="stat-label">情绪</span>
+            <div class="stat-bar-outer"><div class="stat-bar-inner mood" id="barMood" style="width:50%"></div></div>
+        </div>
     </div>
 
+    <!-- 事件卡片区域（主体） -->
     <div class="card-area" id="cardArea">
         <div class="card" id="card">
-            <div class="card-scene-icon" id="cardIcon">⚽</div>
+            <div class="card-scene-icon" id="cardIcon"></div>
             <div class="card-title" id="cardTitle">职业生涯</div>
             <div class="card-description" id="cardDesc">滑动卡片，开启你的足球人生</div>
             <div class="choice-overlay" id="choiceOverlay">
@@ -213,614 +673,38 @@
             </div>
         </div>
     </div>
-    <div class="swipe-hint" id="swipeHint"><span class="arrow left">👈</span> 左右滑动做出选择 <span class="arrow right">👉</span></div>
+
+    <!-- 滑动提示（卡片下方） -->
+    <div class="swipe-hint" id="swipeHint">
+        <span class="arrow left"><img src="assets/icons/arrow_left.png" width="18" height="18" alt="" draggable="false"></span>
+        左右滑动做出选择
+        <span class="arrow right"><img src="assets/icons/arrow_right.png" width="18" height="18" alt="" draggable="false"></span>
+    </div>
+
+    <!-- 年龄/赛季信息栏（底部） -->
+    <div class="header">
+        <div class="age-badge">
+            <span class="age-number" id="ageDisplay">18</span>
+            <span class="age-unit">岁</span>
+        </div>
+        <div class="season-indicator">
+            第<span class="season-number" id="seasonDisplay">1</span>赛季
+        </div>
+    </div>
 </div>
 
-<script>
-(async function() {
-    // 粒子背景
-    const particles = document.getElementById('particles');
-    for(let i=0;i<22;i++){
-        let p=document.createElement('div');
-        p.className='particle';
-        p.style.width=(Math.random()*3+1)+'px';
-        p.style.height=p.style.width;
-        p.style.left=Math.random()*100+'%';
-        p.style.animationDuration=(Math.random()*13+9)+'s';
-        p.style.animationDelay=Math.random()*10+'s';
-        particles.appendChild(p);
-    }
-
-    const card=document.getElementById('card'),
-          cardIcon=document.getElementById('cardIcon'),
-          cardTitle=document.getElementById('cardTitle'),
-          cardDesc=document.getElementById('cardDesc'),
-          choiceOverlay=document.getElementById('choiceOverlay'),
-          choiceLabel=document.getElementById('choiceLabel'),
-          dotsContainer=document.getElementById('dotsContainer'),
-          swipeHint=document.getElementById('swipeHint'),
-          toast=document.getElementById('toast'),
-          endingOverlay=document.getElementById('endingOverlay'),
-          timelineContainer=document.getElementById('timelineContainer'),
-          endingIcon=document.getElementById('endingIcon'),
-          endingTitle=document.getElementById('endingTitle'),
-          endingSubtitle=document.getElementById('endingSubtitle'),
-          finalStats=document.getElementById('finalStats'),
-          restartBtn=document.getElementById('restartBtn'),
-          ageDisplay=document.getElementById('ageDisplay'),
-          seasonDisplay=document.getElementById('seasonDisplay'),
-          barPhysical=document.getElementById('barPhysical'),
-          barFame=document.getElementById('barFame'),
-          barTeam=document.getElementById('barTeam'),
-          barMood=document.getElementById('barMood');
-
-    // 游戏状态
-    const state = {
-        physical:60, fame:28, team:45, mood:50, age:18, season:1, eventCount:0, eventsThisSeason:0,
-        eventsPerSeason:10+Math.floor(Math.random()*5),
-        isDragging:false, startX:0,startY:0, cardOffsetX:0,cardOffsetY:0,cardRotation:0,
-        isAnimating:false, gameOver:false, pendingEvent:null, recentEventIds:[], _peakFame:28,
-        // 链式事件控制
-        currentChainId: null,
-        chainStep: 0,
-        // 记录已完成的特殊链式事件ID，防止重复
-        completedChains: [],
-        // 时间线记录
-        timeline: [{ age: 18, text: "开启职业生涯，加入青训营", type: "normal" }],
-        // 里程碑标记
-        milestoneFlags: {
-            firstGoal:false, firstTransfer:false, firstNationalTeam:false,
-            firstTrophy:false, firstHatTrick:false, firstCaptainBand:false,
-            worldCup:false, loyaltyAward:false, ambitionAward:false,
-            peacemaker:false, fighter:false, teamplayer:false, courage:false,
-            wisdom:false, teamTrophy:false, heroTrophy:false
-        },
-        // 标记是否处于结局阶段
-        isEndingPhase: false
-    };
-
-    // 从外部文件加载事件数据
-    let allEvents = [];
-    try {
-        const response = await fetch('events.jsonl');
-        const text = await response.text();
-        const lines = text.split('\n').filter(line => line.trim());
-        allEvents = lines.map(line => {
-            try {
-                const event = JSON.parse(line);
-                if(event.condition) {
-                    event.conditionFn = new Function('s', 'return ' + event.condition);
-                }
-                return event;
-            } catch(e) {
-                console.error('解析事件行失败:', line, e);
-                return null;
-            }
-        }).filter(event => event !== null);
-
-        if(allEvents.length === 0) {
-            throw new Error('没有成功加载任何事件');
-        }
-    } catch(error) {
-        console.error('加载外部事件文件失败，使用默认事件:', error);
-        // 备用默认事件数据
-        allEvents = [
-            {"id":"training","icon":"⚽","title":"日常训练","description":"今天的训练项目由你选择。","choiceLeftLabel":"加练体能","choiceRightLabel":"战术演练","effectsLeft":{"physical":8,"mood":-3,"team":-2},"effectsRight":{"team":6,"mood":3,"physical":-3},"rarity":"common"}
-        ].map(ev => {
-            if(ev.condition) {
-                ev.conditionFn = new Function('s', 'return ' + ev.condition);
-            }
-            return ev;
-        });
-    }
-
-    function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
-    function updateStat(stat){
-        let bar={physical:barPhysical,fame:barFame,team:barTeam,mood:barMood}[stat];
-        bar.style.width=state[stat]+'%';
-        bar.classList.remove('danger-low','danger-high');
-        if(state[stat]<=16)bar.classList.add('danger-low');
-        if(state[stat]>=88)bar.classList.add('danger-high');
-    }
-    function updateAllStats(){updateStat('physical');updateStat('fame');updateStat('team');updateStat('mood');}
-    function updateHeader(){ageDisplay.textContent=state.age; seasonDisplay.textContent='🏆 第'+state.season+'赛季';}
-    function showToast(msg,type=''){
-        toast.textContent=msg;toast.className='toast '+type;
-        void toast.offsetWidth;toast.classList.add('show');
-        clearTimeout(toast._timeout);
-        toast._timeout=setTimeout(()=>toast.classList.remove('show'), type==='milestone'?2500:1500);
-    }
-
-    const statLabels = { physical:'体质', fame:'名望', team:'团队', mood:'情绪' };
-
-    function renderOverlay(direction){
-        if(!state.pendingEvent) return;
-        const label = direction==='left'? state.pendingEvent.choiceLeftLabel : state.pendingEvent.choiceRightLabel;
-        const effects = direction==='left'? state.pendingEvent.effectsLeft : state.pendingEvent.effectsRight;
-        choiceLabel.textContent = label;
-        dotsContainer.innerHTML = '';
-        Object.keys(statLabels).forEach(s=>{
-            const val = effects[s] || 0;
-            const abs = Math.abs(val);
-            const item = document.createElement('div');
-            item.className = 'dot-item';
-            const dot = document.createElement('div');
-            dot.className = 'dot-circle';
-            if(val>0) { dot.classList.add('pos'); }
-            else if(val<0) { dot.classList.add('neg'); }
-            else { dot.classList.add('neutral'); }
-            if(abs >= 5) dot.classList.add('large'); else dot.classList.add('small');
-            item.appendChild(dot);
-            const lbl = document.createElement('span'); lbl.className = 'dot-label'; lbl.textContent = statLabels[s];
-            item.appendChild(lbl);
-            dotsContainer.appendChild(item);
-        });
-        choiceOverlay.classList.add('visible');
-    }
-    function hideOverlay(){ choiceOverlay.classList.remove('visible'); }
-
-    function recordTimeline(text, type = 'normal') {
-        state.timeline.push({ age: state.age, text: text, type: type });
-    }
-
-    function checkGameOver(){
-        let reason=null, icon='', title='', subtitle='';
-
-        // 优先级1：极端数值导致的立即死亡/退役
-        if(state.physical<=0){ reason='physical_min'; icon='🦵'; title='伤病缠身'; subtitle='反复伤病，你不得不提前退役'; recordTimeline('你再也无法像以前一样奔跑，不得不离开绿茵场', 'bad');}
-        else if(state.team<=0){ reason='team_min'; icon='🚫'; title='更衣室毒瘤'; subtitle='什么叫格林公式？我周一还要领金球呢！'; recordTimeline('你成了更衣室的毒瘤，队友不愿再配合你演戏', 'bad');}
-        else if(state.fame<=0){ reason='fame_min'; icon='👻'; title='默默无闻'; subtitle='你在低级别联赛中结束了自己的生涯'; recordTimeline('你自我安慰道："小俱乐部也有小俱乐部的乐趣"', 'normal');}
-        else if(state.mood<=0){ reason='mood_min'; icon='😔'; title='抑郁患者'; subtitle='你失去了对足球的热爱。'; recordTimeline('太过思乡，玉玉了，难以发挥出球王球技', 'bad');}
-
-        // 优先级2：极端满值结局
-        else if(state.physical>=100){ reason='physical_max'; icon='💪'; title='魔鬼筋肉人'; subtitle='头顶开始变得尖尖的...那我问你！'; recordTimeline('药物依赖影响了你的运动能力与球技，可能健美更适合你', 'gold');}
-        else if(state.fame>=100){ reason='fame_max'; icon='📸'; title='大明星'; subtitle='场下围满了狗仔队与小报记者，你的私生活被无限曝光。'; recordTimeline('心力交瘁，选择退役，转行商业与影视', 'gold');}
-        else if(state.team>=100){ reason='team_max'; icon='🤝'; title='老好人'; subtitle='你为战术牺牲太多，失去了自我'; recordTimeline('虽然没有退役，但已经成了工具人', 'gold');}
-        else if(state.mood>=100){ reason='mood_max'; icon='🍷'; title='花花公子'; subtitle='夜夜笙歌让你状态下滑，最终因生活不检点被俱乐部除名。'; recordTimeline('你迷失在灯红酒绿的喧嚣中，足球离你越来越远了', 'bad');}
-
-        // 优先级3：年龄与成就结局
-        else if(state.age>=35){
-            if(state.milestoneFlags.worldCup) { reason='legend'; icon='👑'; title='球王加冕'; subtitle='你的名字将被永远刻在足球史册上。'; recordTimeline('正式宣布光荣退役', 'gold'); }
-            else if(state.fame>80) { reason='star'; icon='⭐'; title='名宿'; subtitle='你享受了成功的职业生涯，备受尊敬。'; recordTimeline('举办退役告别赛', 'gold'); }
-            else if(state.milestoneFlags.loyaltyAward) { reason='loyal_end'; icon='🏠'; title='城市英雄'; subtitle='你用一生守护了一座城市的荣耀。'; recordTimeline('在主场完成谢幕战', 'gold'); }
-            else if(state.milestoneFlags.ambitionAward) { reason='ambition_end'; icon='🔥'; title='冒险家'; subtitle='你的勇气和决心激励了无数后来者。'; recordTimeline('在最高水平的联赛中退役', 'gold'); }
-            else { reason='age'; icon='⏳'; title='岁月不饶人'; subtitle='到了告别的年纪。'; recordTimeline('平静地宣布退役', 'normal'); }
-        }
-
-        if(reason){
-            loadEndingCard(icon, title, subtitle, reason);
-            return true;
-        }
-        return false;
-    }
-
-        // 加载结局卡片（作为特殊事件）
-    function loadEndingCard(icon, title, subtitle, reason) {
-        state.gameOver = true;
-        state.isEndingPhase = true;
-        state._peakFame = Math.max(state._peakFame, state.fame);
-
-        /* 修复：重置动画状态，否则可能导致卡片无法拖动 */
-        state.isAnimating = false;
-
-        // 1. 移除普通卡片的样式，添加结局卡片基础样式
-        card.className = 'card ending-card';
-
-        // 2. 根据结局原因添加具体颜色样式
-        if(reason.includes('physical')) {
-            card.classList.add(reason.includes('max') ? 'physical-max' : 'physical-min');
-        } else if(reason.includes('fame')) {
-            card.classList.add(reason.includes('max') ? 'fame-max' : 'fame-min');
-        } else if(reason.includes('team')) {
-            card.classList.add(reason.includes('max') ? 'team-max' : 'team-min');
-        } else if(reason.includes('mood')) {
-            card.classList.add(reason.includes('max') ? 'mood-max' : 'mood-min');
-        } else if(reason.includes('legend') || reason.includes('star')) {
-            card.classList.add('gold');
-        } else {
-            card.classList.add('special');
-        }
-
-        // 3. 更新卡片内容
-        cardIcon.textContent=icon;cardTitle.textContent="职业生涯结束";cardDesc.innerHTML=`<div class="ending-title-wrapper"><div class="ending-glow-title">${title}</div><div class="ending-draft-text">${subtitle}</div></div>`;
-
-        // 4. 更新遮罩层中的内容（用于卡片飞走后显示）
-        endingIcon.textContent = icon;
-        endingTitle.textContent = title;
-        endingSubtitle.textContent = subtitle;
-        finalStats.textContent = `赛季数：${state.season-1} | 事件数：${state.eventCount}`;
-
-        // 5. 重置位置并进入动画
-        card.style.transform = 'translateY(40px) scale(0.9)';
-        card.style.opacity = '0';
-        card.classList.remove('flying-left', 'flying-right', 'grabbed');
-
-        // 强制重绘
-        void card.offsetWidth;
-
-        card.classList.add('entering');
-
-        // 【关键修复】动画结束后，确保卡片完全显示且不透明
-        setTimeout(() => {
-            card.classList.remove('entering');
-            card.style.transform = 'translateX(0) rotate(0deg)';
-            card.style.opacity = '1'; // 恢复不透明度
-        }, 400); // 对应 CSS .entering 动画时长
-
-        // 6. 隐藏普通提示，更新提示文字
-        swipeHint.style.opacity = '1';
-        swipeHint.innerHTML = '<span class="arrow left">👈</span> 滑动查看生涯回顾 <span class="arrow right">👉</span>';
-
-        // 7. 渲染时间线（但此时不可见，在遮罩层中）
-        renderTimeline();
-    }
-
-    function renderTimeline() {
-        timelineContainer.innerHTML = '';
-        state.timeline.forEach((item, index) => {
-            const el = document.createElement('div');
-            el.className = 'timeline-item';
-            el.innerHTML = `
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <div class="timeline-year">${item.age}岁</div>
-                    <div class="timeline-text ${item.type === 'gold' || item.type === 'bad' ? 'timeline-milestone' : ''}">${item.text}</div>
-                </div>
-            `;
-            timelineContainer.appendChild(el);
-        });
-    }
-
-    // 处理结局卡片的飞出逻辑
-    function handleEndingFly(direction) {
-        state.isAnimating = true;
-
-        // 设置飞出动画的起始点
-        card.style.setProperty('--fly-start-x', state.cardOffsetX + 'px');
-        card.style.setProperty('--fly-start-r', state.cardRotation + 'deg');
-
-        card.classList.add(direction === 'left' ? 'flying-left' : 'flying-right');
-        card.classList.remove('grabbed', 'entering');
-        hideOverlay();
-
-        // 动画结束后显示全屏遮罩
-        setTimeout(() => {
-            endingOverlay.classList.add('visible');
-            document.getElementById('resultScreen').style.display = 'block';
-
-            // 触发时间线逐条显示
-            const items = document.querySelectorAll('.timeline-item');
-            items.forEach((item, index) => {
-                setTimeout(() => {
-                    item.classList.add('show');
-                }, index * 150);
-            });
-
-            // 显示重启按钮
-            const totalTimelineTime = state.timeline.length * 150 + 500;
-            setTimeout(() => {
-                restartBtn.classList.add('visible');
-            }, totalTimelineTime);
-
-        }, 350); // 对应 CSS 动画时长
-    }
-
-    window.restartGame = function(){
-        state.physical=60;state.fame=28;state.team=45;state.mood=50;state.age=18;state.season=1;state.eventCount=0;state.eventsThisSeason=0;
-        state.eventsPerSeason=10+Math.floor(Math.random()*5);
-        state.isDragging=false;state.isAnimating=false;state.gameOver=false; state.isEndingPhase=false;
-        state.cardOffsetX=0;state.cardOffsetY=0;state.cardRotation=0;
-        state.pendingEvent=null; state.recentEventIds=[]; state._peakFame=28;
-        state.milestoneFlags={
-            firstGoal:false, firstTransfer:false, firstNationalTeam:false,
-            firstTrophy:false, firstHatTrick:false, firstCaptainBand:false,
-            worldCup:false, loyaltyAward:false, ambitionAward:false,
-            peacemaker:false, fighter:false, teamplayer:false, courage:false,
-            wisdom:false, teamTrophy:false, heroTrophy:false
-        };
-        state.currentChainId = null;
-        state.chainStep = 0;
-        state.completedChains = [];
-        // 重置时间线记录
-        state.timeline = [{ age: 18, text: "开启职业生涯，加入青训营", type: "normal" }];
-        // 隐藏结局界面
-        endingOverlay.classList.remove('visible');
-        restartBtn.classList.remove('visible');
-        document.getElementById('resultScreen').style.display = 'none';
-        // 清空时间线容器
-        timelineContainer.innerHTML = '';
-        // 重置主游戏卡片状态
-        card.style.transform='translateX(0) rotate(0deg)';
-        card.classList.remove('flying-left','flying-right','returning','grabbed', 'gold', 'special', 'dark', 'ending-card');
-        card.classList.remove('physical-max', 'physical-min', 'fame-max', 'fame-min', 'team-max', 'team-min', 'mood-max', 'mood-min');
-        hideOverlay();
-        swipeHint.style.opacity='1';
-        swipeHint.innerHTML = '<span class="arrow left">👈</span> 左右滑动做出选择 <span class="arrow right">👉</span>';
-        updateAllStats();
-        updateHeader();
-        loadNewEvent();
-        state._peakFame = state.fame;
-
-        console.log('游戏已重启！');
-    };
-
-    // 核心逻辑：获取下一个事件
-    function getRandomEvent(){
-        let nextEvent = null;
-
-        // 1. 优先处理正在进行的链式事件
-        if (state.currentChainId) {
-            const nextStep = state.chainStep + 1;
-            const chainNext = allEvents.find(e => e.chain === state.currentChainId && e.step === nextStep);
-            if (chainNext) {
-                if (!chainNext.conditionFn || chainNext.conditionFn(state)) {
-                    nextEvent = chainNext;
-                }
-            }
-            // 如果链断了（找不到下一步或条件不满足），重置链状态
-            if (!nextEvent) {
-                if (!state.completedChains.includes(state.currentChainId)) {
-                    state.completedChains.push(state.currentChainId);
-                }
-                state.currentChainId = null;
-                state.chainStep = 0;
-            }
-        }
-
-        // 2. 如果没有链式事件，随机选择新事件
-        if (!nextEvent) {
-            const eligible = allEvents.filter(ev => {
-                // A. 基础条件检查
-                if (ev.conditionFn && !ev.conditionFn(state)) return false;
-
-                // B. 排除链式事件的中间步骤 (只能通过第一步触发)
-                if (ev.chain && ev.step > 1) return false;
-
-                // C. 排除已完成链式事件的"第一步"
-                if (ev.chain && ev.step === 1 && state.completedChains.includes(ev.chain)) return false;
-
-                // D. 避免连续重复
-                if (state.recentEventIds.includes(ev.id) && state.recentEventIds.length < allEvents.length - 5) {
-                    if (Math.random() < 0.6) return false;
-                }
-                return true;
-            });
-
-            if (eligible.length === 0) {
-                nextEvent = allEvents.find(e => e.id === 'training') || allEvents[0];
-            } else {
-                // 权重随机
-                const weighted = [];
-                eligible.forEach(ev => {
-                    const w = ev.rarity === 'rare' ? 1 : ev.rarity === 'uncommon' ? 3 : 6;
-                    for (let i = 0; i < w; i++) weighted.push(ev);
-                });
-                nextEvent = weighted[Math.floor(Math.random() * weighted.length)];
-            }
-        }
-        return nextEvent;
-    }
-
-    function loadNewEvent(){
-        if(state.gameOver) return;
-        const event = getRandomEvent();
-        state.pendingEvent = event;
-        state.recentEventIds.push(event.id);
-        if(state.recentEventIds.length>15) state.recentEventIds.shift();
-
-        cardIcon.textContent=event.icon||'⚽';
-        cardTitle.textContent=event.title||'职业生涯';
-        cardDesc.textContent=event.description;
-
-        // 重置卡片样式（移除结局样式）
-        card.className = 'card';
-        if (event.color) {
-            if (event.color === 'gold') card.classList.add('gold');
-            else if (event.color === 'special') card.classList.add('special');
-            else if (event.color === 'dark') card.classList.add('dark');
-        }
-
-        card.classList.remove('flying-left','flying-right','returning','grabbed');
-        card.style.transform='translateX(0) rotate(0deg)';
-        card.classList.add('entering');
-        setTimeout(()=>card.classList.remove('entering'),400);
-
-        state.isAnimating=false;
-        swipeHint.style.opacity=state.eventCount<3?'1':'0.25';
-        swipeHint.innerHTML = '<span class="arrow left">👈</span> 左右滑动做出选择 <span class="arrow right">👉</span>';
-        hideOverlay();
-        updateHeader();
-    }
-
-    function applyChoice(direction){
-        if(state.isAnimating||state.gameOver||state.isEndingPhase||!state.pendingEvent) return;
-        const event = state.pendingEvent;
-        if((event.lockedChoice==='left'&&direction==='right')||(event.lockedChoice==='right'&&direction==='left')){
-            showToast('🔒 此选项不可用');
-            state.isAnimating=false;
-            return;
-        }
-
-        state.isAnimating=true;
-        const effects = direction==='left'?event.effectsLeft:event.effectsRight;
-        if(effects) Object.keys(effects).forEach(s=>{
-            if(state[s]!==undefined) state[s]=clamp(state[s]+effects[s],0,100);
-        });
-
-        // 处理里程碑 - 现在左右选择都有里程碑
-        const milestoneData = direction === 'left' ? event.milestoneLeft : event.milestoneRight;
-        if(milestoneData && !state.milestoneFlags[milestoneData.id]){
-            state.milestoneFlags[milestoneData.id] = true;
-            showToast(milestoneData.text, 'milestone');
-            recordTimeline(milestoneData.text, 'gold');
-        }
-
-        // 更新链式状态
-        if (event.chain) {
-            if (state.currentChainId === event.chain && state.chainStep === event.step) {
-                state.chainStep++;
-                const hasNextStep = allEvents.find(e => e.chain === event.chain && e.step === state.chainStep + 1);
-                if (!hasNextStep) {
-                    if (!state.completedChains.includes(event.chain)) {
-                        state.completedChains.push(event.chain);
-                    }
-                    state.currentChainId = null;
-                    state.chainStep = 0;
-                }
-            } else {
-                state.currentChainId = event.chain;
-                state.chainStep = event.step;
-            }
-        } else {
-            state.currentChainId = null;
-            state.chainStep = 0;
-        }
-
-        state._peakFame=Math.max(state._peakFame,state.fame);
-        state.eventCount++; state.eventsThisSeason++;
-
-        // 赛季结束逻辑
-        if(state.eventsThisSeason>=state.eventsPerSeason){
-            state.eventsThisSeason=0; state.season++; state.age++;
-            state.eventsPerSeason=8+Math.floor(Math.random()*6);
-            if(state.age>=30)state.physical=clamp(state.physical-2,0,100);
-            if(state.age>=34)state.physical=clamp(state.physical-3,0,100);
-            showToast('📅 赛季结束！年龄 +1');
-            let seasonSummary = "第" + (state.season-1) + "赛季结束";
-            if(state.fame > 80) seasonSummary += "，你是世界级球星";
-            recordTimeline(seasonSummary, 'normal');
-
-            // 赛季结束打断所有正在进行的链
-            state.currentChainId = null;
-            state.chainStep = 0;
-        }
-
-        updateAllStats();
-
-        if(checkGameOver()){
-            return;
-        }
-
-        // 飞出动画
-        card.style.setProperty('--fly-start-x', state.cardOffsetX+'px');
-        card.style.setProperty('--fly-start-r', state.cardRotation+'deg');
-        card.classList.add(direction==='left'?'flying-left':'flying-right');
-        card.classList.remove('grabbed','returning');
-        hideOverlay();
-        state.cardOffsetX=0;state.cardRotation=0; state.pendingEvent=null;
-
-        setTimeout(()=>{
-            card.classList.remove('flying-left','flying-right');
-            card.style.transform='translateX(0) rotate(0deg)';
-            loadNewEvent();
-        },350);
-    }
-
-    function getPos(e){
-        if(e.touches&&e.touches.length)return{x:e.touches[0].clientX,y:e.touches[0].clientY};
-        if(e.changedTouches&&e.changedTouches.length)return{x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY};
-        return{x:e.clientX,y:e.clientY};
-    }
-    function onStart(e){
-        if(state.isAnimating) return;
-        const p=getPos(e);
-        state.isDragging=true;
-        state.startX=p.x;state.startY=p.y;
-        card.classList.add('grabbed');
-        card.classList.remove('returning','entering');
-        card.style.transition='box-shadow 0.12s';
-        swipeHint.style.opacity='0';
-    }
-    function onMove(e){
-        if(!state.isDragging||state.isAnimating)return;
-        const p=getPos(e);
-        const dx=p.x-state.startX, dy=p.y-state.startY;
-        state.cardOffsetX=dx;
-        state.cardRotation=dx*0.07;
-        card.style.transform=`translateX(${dx}px) translateY(${dy*0.3}px) rotate(${state.cardRotation}deg)`;
-
-        // 结局阶段不显示选择Overlay，只显示提示
-        if(state.isEndingPhase) {
-            // 可选：在这里添加结局卡片的特殊拖动反馈
-            return;
-        }
-
-        const w=card.offsetWidth, t=w*0.1;
-        if(dx<-t){ renderOverlay('left'); }
-        else if(dx>t){ renderOverlay('right'); }
-        else { hideOverlay(); }
-    }
-        function onEnd(e){
-        if(!state.isDragging) return;
-        state.isDragging=false;
-        card.classList.remove('grabbed');
-        card.style.transition='transform 0.4s cubic-bezier(0.25,0.8,0.25,1.2), box-shadow 0.2s';
-        hideOverlay();
-        const dx=state.cardOffsetX, w=card.offsetWidth, t=w*0.3;
-
-        // 修改开始：确保结局卡片也能响应滑动操作
-        if(dx<-t) {
-            // 左滑：如果是结局阶段则飞出结局卡片，否则处理普通选择
-            if(state.isEndingPhase) {
-                handleEndingFly('left');
-            } else {
-                applyChoice('left');
-            }
-        }
-        else if(dx>t) {
-            // 右滑：如果是结局阶段则飞出结局卡片，否则处理普通选择
-            if(state.isEndingPhase) {
-                handleEndingFly('right');
-            } else {
-                applyChoice('right');
-            }
-        }
-        // 修改结束
-
-        else {
-            card.classList.add('returning');
-            card.style.transform='translateX(0) rotate(0deg)';
-            state.cardOffsetX=0;
-            state.cardRotation=0;
-            setTimeout(()=>{card.classList.remove('returning'); card.style.transition='box-shadow 0.2s';},400);
-            // 恢复提示语显示
-            swipeHint.style.opacity=state.isEndingPhase ? '1' : (state.eventCount<3?'1':'0.25');
-        }
-    }
-    card.addEventListener('touchstart',onStart,{passive:false});
-    card.addEventListener('touchmove',onMove,{passive:false});
-    card.addEventListener('touchend',onEnd);
-    card.addEventListener('touchcancel',onEnd);
-    card.addEventListener('mousedown',onStart);
-    window.addEventListener('mousemove',e=>{if(state.isDragging){e.preventDefault();onMove(e);}});
-    window.addEventListener('mouseup',e=>{if(state.isDragging)onEnd(e);});
-    card.addEventListener('touchmove',e=>{if(state.isDragging)e.preventDefault();},{passive:false});
-
-    window.addEventListener('keydown',e=>{
-        if(state.isAnimating||state.gameOver||state.isDragging)return;
-        // 结局阶段禁用键盘操作，强制使用滑动体验
-        if(state.isEndingPhase) return;
-
-        if(e.key==='ArrowLeft'||e.key==='a'){e.preventDefault();simulateSwipe('left');}
-        else if(e.key==='ArrowRight'||e.key==='d'){e.preventDefault();simulateSwipe('right');}
-    });
-    function simulateSwipe(dir){
-        if(state.isAnimating||state.gameOver||state.isEndingPhase)return;
-        const off=dir==='left'?-140:140;
-        state.cardOffsetX=off;
-        state.cardRotation=off*0.07;
-        card.style.transition='transform 0.22s ease-out, box-shadow 0.2s';
-        card.style.transform=`translateX(${off}px) rotate(${state.cardRotation}deg)`;
-        card.classList.add('grabbed');
-        renderOverlay(dir);
-        setTimeout(()=>applyChoice(dir),180);
-    }
-
-    updateAllStats();
-    updateHeader();
-    loadNewEvent();
-    state._peakFame = state.fame;
-})();
-</script>
+<!-- JS 模块（按依赖顺序加载） -->
+<script src="js/constants.js"></script>
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/animation.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/events_data.js"></script>
+<script src="js/events.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/ending.js"></script>
+<script src="js/card.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
