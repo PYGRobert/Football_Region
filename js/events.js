@@ -1,7 +1,10 @@
 /**
- * events.js — 事件系统模块
+ * events.js — 事件系统模块 (v1.4)
  * 依赖: State, Constants, RawEvents (events_data.js)
  * 职责: 事件解析（condition → conditionFn）、链式逻辑、权重随机选择
+ *
+ * v1.4: 条件解析器更新以兼容旧事件键名 → 新状态键名映射
+ *       支持 !s.milestoneFlags.X 布尔条件
  *
  * 数据来源: Game.RawEvents（events_data.js 内嵌，无需 fetch，file:// 兼容）
  */
@@ -31,28 +34,58 @@ window.Game.Events = (function() {
     };
 
     /**
-     * 支持的状态属性
+     * 支持的状态属性映射
+     * 旧事件中的键名通过此表映射到新状态键名
+     *   physical → ability
+     *   fame → reputation (隐藏)
+     *   mood → ambition
+     *   team → team (不变)
      */
     var STATE_PROPS = {
-        's.age': 'age',
-        's.fame': 'fame',
-        's.physical': 'physical',
+        // v1.4 新键名（直接访问）
+        's.wealth': 'wealth',
+        's.ability': 'ability',
         's.team': 'team',
-        's.mood': 'mood',
+        's.ambition': 'ambition',
+        's.reputation': 'reputation',
+        // 旧键名兼容 → 映射到新键名
+        's.physical': 'ability',
+        's.fame': 'reputation',
+        's.mood': 'ambition',
+        // 公共字段不变
+        's.age': 'age',
         's.season': 'season',
         's.eventCount': 'eventCount',
         's.eventsThisSeason': 'eventsThisSeason'
     };
 
     /**
-     * 解析单个条件表达式（如 "s.age<=19"）
+     * 解析单个条件表达式
+     * 支持格式:
+     *   "s.ability>=60"     — 数值比较
+     *   "!s.milestoneFlags.X" — 布尔否定（里程碑未达成）
+     *   "s.milestoneFlags.X"  — 布尔肯定（里程碑已达成）
      * @param {string} expr - 条件表达式
      * @returns {Function|null} 条件函数
      */
     function _parseSingleCondition(expr) {
         expr = expr.trim();
 
-        // 尝试匹配 "s.property operator value" 格式
+        // --- 里程碑布尔条件: !s.milestoneFlags.xxx 或 s.milestoneFlags.xxx ---
+        var boolMatch = expr.match(/^(!?)s\.milestoneFlags\.(\w+)$/);
+        if (boolMatch) {
+            var isNegated = boolMatch[1] === '!';
+            var flagName = boolMatch[2];
+            return function(state) {
+                var flags = state.milestoneFlags;
+                if (!flags) return false;
+                var val = flags[flagName];
+                // 未设置的flag视为false
+                return isNegated ? !val : !!val;
+            };
+        }
+
+        // --- 数值条件: s.property operator value ---
         var match = expr.match(/^(s\.\w+)\s*(<=|>=|!=|<|>|==)\s*(\d+)$/);
         if (!match) {
             console.warn('[Events] 无法解析条件:', expr);
@@ -89,7 +122,7 @@ window.Game.Events = (function() {
     /**
      * 解析复合条件（支持 && 连接的多个条件）
      * @param {string} conditionStr - 条件字符串
-     * @returns {Function|null} 条件函数
+     * @returns {Function|null} 条件函数，null表示无条件（始终满足）
      */
     function _parseCondition(conditionStr) {
         if (!conditionStr || typeof conditionStr !== 'string') {
@@ -137,7 +170,7 @@ window.Game.Events = (function() {
     /** @type {Array<object>} 所有已解析事件 */
     var _allEvents = _parseEvents(RawEvents);
 
-    console.log('[Events] 已加载 ' + _allEvents.length + ' 个事件');
+    console.log('[Events] 已加载 ' + _allEvents.length + ' 个事件 (v1.4 条件映射)');
 
     // ==================== 事件选择逻辑 ====================
 

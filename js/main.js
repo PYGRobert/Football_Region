@@ -1,7 +1,9 @@
 /**
- * main.js — 游戏入口
+ * main.js — 游戏入口 (v1.4)
  * 依赖: 所有 Game.* 模块
  * 职责: 粒子背景、模块初始化、全局 restartGame 绑定、存档管理
+ *
+ * v1.4: debug声望切换(反引号键)、_peakReputation初始化
  */
 (function() {
     'use strict';
@@ -67,12 +69,13 @@
             card.style.transform = 'translateX(0) rotate(0deg)';
             card.classList.remove(
                 'flying-left', 'flying-right', 'returning', 'grabbed',
-                'gold', 'special', 'dark', 'ending-card'
+                'gold', 'special', 'dark', 'ending-card', 'ending-flip', 'player-template-card'
             );
-            // 移除结局颜色变体
+            // 移除结局颜色变体 (v1.4)
             var endingVariants = [
-                'physical-max', 'physical-min', 'fame-max', 'fame-min',
-                'team-max', 'team-min', 'mood-max', 'mood-min'
+                'wealth-max', 'wealth-min', 'ability-max', 'ability-min',
+                'team-max', 'team-min', 'ambition-max', 'ambition-min',
+                'wonderkid', 'club-legend', 'ballon-dor', 'age'
             ];
             endingVariants.forEach(function(cls) { card.classList.remove(cls); });
 
@@ -80,11 +83,15 @@
             d.swipeHint.style.opacity = '1';
             UI.updateAllStats();
             UI.updateHeader();
+            UI.updateDebugReputation();
             Card.loadNewEvent();
-            s._peakFame = s.fame;
+            s._peakReputation = s.reputation;
 
             console.log('[Main] 游戏已重启！');
         };
+
+        // ---- Debug: 反引号键切换由 debug.js 管理 ----
+        // 详见 js/debug.js
 
         // ---- 启动游戏 ----
         startGame();
@@ -115,8 +122,10 @@
             var info = document.createElement('p');
             info.style.cssText = 'color:#ccc;margin-bottom:25px;font-size:0.9rem;line-height:1.5;';
             var date = new Date(saveInfo.timestamp);
+            var repName = saveInfo.reputation ? C.getReputationLevel(saveInfo.reputation).name : '默默无闻';
             info.innerHTML = '发现存档<br>' +
                 '<span style="color:#c9a84c;">年龄: ' + saveInfo.age + '岁 | 赛季: ' + saveInfo.season + '</span><br>' +
+                '<span style="font-size:0.8rem;color:#888;">声望: ' + repName + '</span><br>' +
                 '<span style="font-size:0.8rem;color:#888;">' + date.toLocaleDateString() + ' ' + date.toLocaleTimeString() + '</span>';
 
             var btnContainer = document.createElement('div');
@@ -154,9 +163,10 @@
                 var s = S.get();
                 UI.updateAllStats();
                 UI.updateHeader();
+                UI.updateDebugReputation();
                 Card.bindEvents();
                 Card.loadNewEvent(true); // 传入true表示恢复存档
-                s._peakFame = s.fame;
+                s._peakReputation = s.reputation;
                 console.log('[Main] 已加载存档继续游戏');
             } else {
                 console.warn('[Main] 加载存档失败，开始新游戏');
@@ -168,9 +178,10 @@
             var s = S.get();
             UI.updateAllStats();
             UI.updateHeader();
+            UI.updateDebugReputation();
             Card.bindEvents();
             Card.loadNewEvent();
-            s._peakFame = s.fame;
+            s._peakReputation = s.reputation;
             console.log('[Main] 游戏初始化完成 - 足球生涯：抉择与传承 v1.4');
         }
     }

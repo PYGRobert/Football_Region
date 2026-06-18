@@ -1,7 +1,14 @@
 /**
- * card.js — 卡片交互模块
- * 依赖: State, UI, Utils, Events, Ending, Timeline, Animation
+ * card.js — 卡片交互模块 (v1.4)
+ * 依赖: State, UI, Utils, Events, Ending, Timeline, Animation, Icons, Constants
  * 职责: 卡片拖拽/滑动手势、应用选择效果、键盘操作、事件加载与刷新
+ *
+ * v1.4 改动:
+ *   - 效果键名映射层 (old physical→ability, fame→reputation, mood→ambition)
+ *   - reputation 静默更新（不在选择覆盖层显示）
+ *   - age decay 影响 ability 而非 physical
+ *   - 赛季结束财富自然积累
+ *   - _peakReputation 替换 _peakFame
  */
 window.Game = window.Game || {};
 
@@ -37,7 +44,6 @@ window.Game.Card = (function() {
         if (isRestore) {
             var pendingEventId = S.getPendingEventId();
             if (pendingEventId) {
-                // 从事件列表中查找对应的事件
                 var allEvents = Evt.getAllEvents();
                 for (var i = 0; i < allEvents.length; i++) {
                     if (allEvents[i].id === pendingEventId) {
@@ -59,7 +65,7 @@ window.Game.Card = (function() {
 
         var d = UI.dom();
 
-        // 使用本地Twemoji图标（大尺寸）
+        // 使用本地图标（大尺寸）
         if (Icons && Icons.getEventIconById) {
             d.cardIcon.innerHTML = Icons.getEventIconById(event.id, 96);
         } else {
@@ -82,7 +88,7 @@ window.Game.Card = (function() {
 
         // 使用 requestAnimationFrame 优化入场动画
         Ani.animate('card-enter', function(progress) {
-            // 入场动画由CSS处理，这里只需要在动画结束时清理
+            // 入场动画由CSS处理
         }, C.ENTER_ANIMATION_DURATION).then(function() {
             card.classList.remove('entering');
         });
@@ -103,6 +109,25 @@ window.Game.Card = (function() {
     // ==================== 应用选择 ====================
 
     /**
+     * 将旧事件效果键名映射为新状态键名
+     * physical→ability, fame→reputation, mood→ambition, team→team
+     * @param {object} effects - 原始事件effects对象
+     * @returns {object} 映射后的effects对象（新键名）
+     */
+    function _mapEffects(effects) {
+        if (!effects) return {};
+        var mapped = {};
+        var KEY_MAP = C.STAT_KEY_MAP;
+        for (var key in effects) {
+            if (effects.hasOwnProperty(key)) {
+                var newKey = KEY_MAP[key] || key;
+                mapped[newKey] = (mapped[newKey] || 0) + effects[key];
+            }
+        }
+        return mapped;
+    }
+
+    /**
      * 应用玩家的选择效果
      * @param {string} direction - 'left' | 'right'
      */
@@ -121,15 +146,19 @@ window.Game.Card = (function() {
         }
 
         s.isAnimating = true;
-        var effects = direction === 'left' ? event.effectsLeft : event.effectsRight;
+        var rawEffects = direction === 'left' ? event.effectsLeft : event.effectsRight;
+        var effects = _mapEffects(rawEffects);
 
-        // 应用属性变化
-        if (effects) {
-            C.STAT_KEYS.forEach(function(statKey) {
-                if (effects[statKey] !== undefined) {
-                    s[statKey] = U.clamp(s[statKey] + effects[statKey], C.STAT_MIN, C.STAT_MAX);
-                }
-            });
+        // 应用可见属性变化
+        C.STAT_KEYS.forEach(function(statKey) {
+            if (effects[statKey] !== undefined) {
+                s[statKey] = U.clamp(s[statKey] + effects[statKey], C.STAT_MIN, C.STAT_MAX);
+            }
+        });
+
+        // 应用隐藏声望变化（无上限，下限0）
+        if (effects['reputation'] !== undefined) {
+            s.reputation = Math.max(0, s.reputation + effects['reputation']);
         }
 
         // 处理里程碑
@@ -165,7 +194,7 @@ window.Game.Card = (function() {
             s.chainStep = 0;
         }
 
-        s._peakFame = Math.max(s._peakFame, s.fame);
+        s._peakReputation = Math.max(s._peakReputation, s.reputation);
         s.eventCount++;
         s.eventsThisSeason++;
 
@@ -176,17 +205,25 @@ window.Game.Card = (function() {
             s.age++;
             s.eventsPerSeason = C.EVENTS_PER_SEASON_MIN + Math.floor(Math.random() * C.EVENTS_PER_SEASON_RANGE);
 
+            // 年龄衰退：影响能力(ability)
             if (s.age >= C.AGE_DECAY_START) {
-                s.physical = U.clamp(s.physical - C.AGE_DECAY_MILD_AMOUNT, C.STAT_MIN, C.STAT_MAX);
+                s.ability = U.clamp(s.ability - C.AGE_DECAY_MILD_AMOUNT, C.STAT_MIN, C.STAT_MAX);
             }
             if (s.age >= C.AGE_DECAY_SEVERE) {
-                s.physical = U.clamp(s.physical - C.AGE_DECAY_SEVERE_AMOUNT, C.STAT_MIN, C.STAT_MAX);
+                s.ability = U.clamp(s.ability - C.AGE_DECAY_SEVERE_AMOUNT, C.STAT_MIN, C.STAT_MAX);
             }
+
+            // 财富自然积累（职业生涯收入）
+            var wealthGrowth = 2 + Math.floor(Math.random() * 3); // +2~4 per season
+            s.wealth = U.clamp(s.wealth + wealthGrowth, C.STAT_MIN, C.STAT_MAX);
 
             UI.showToast(Icons ? Icons.replaceEmoji('📅 赛季结束！年龄 +1') : '赛季结束！年龄 +1');
 
             var seasonSummary = '第' + (s.season - 1) + '赛季结束';
-            if (s.fame > 80) seasonSummary += '，你是世界级球星';
+            var repLevel = C.getReputationLevel(s.reputation);
+            if (repLevel.key === 'world') {
+                seasonSummary += '，世界级球星';
+            }
             TL.record(seasonSummary, 'normal');
 
             // 赛季结束打断所有链
@@ -195,10 +232,12 @@ window.Game.Card = (function() {
         }
 
         UI.updateAllStats();
+        // 更新debug声望显示（如果可见）
+        if (UI.updateDebugReputation) UI.updateDebugReputation();
 
         // 检查结局
         if (End.checkGameOver()) {
-            S.save(); // 游戏结束时保存最终状态
+            S.save();
             return;
         }
 
@@ -213,9 +252,8 @@ window.Game.Card = (function() {
         s.cardRotation = 0;
         s.pendingEvent = null;
 
-        // 使用 requestAnimationFrame 优化飞出动画
         Ani.animate('card-fly', function(progress) {
-            // 飞出动画由CSS处理，这里只需要在动画结束时清理
+            // 飞出动画由CSS处理
         }, C.FLY_ANIMATION_DURATION).then(function() {
             d.card.classList.remove('flying-left', 'flying-right');
             d.card.style.transform = 'translateX(0) rotate(0deg)';
@@ -228,6 +266,7 @@ window.Game.Card = (function() {
     function onStart(e) {
         var s = S.get();
         if (s.isAnimating) return;
+        if (s.gameOver && !s.isEndingPhase) return; // 引导卡片阶段禁止拖动
         var p = U.getPos(e);
         s.isDragging = true;
         s.startX = p.x;
@@ -293,9 +332,8 @@ window.Game.Card = (function() {
             s.cardOffsetX = 0;
             s.cardRotation = 0;
 
-            // 使用 requestAnimationFrame 优化弹回动画
             Ani.animate('card-return', function(progress) {
-                // 弹回动画由CSS处理，这里只需要在动画结束时清理
+                // 弹回动画由CSS处理
             }, C.ENTER_ANIMATION_DURATION).then(function() {
                 card.classList.remove('returning');
                 card.style.transition = 'box-shadow 0.2s';

@@ -1,7 +1,9 @@
 /**
- * state.js — 游戏状态管理模块
+ * state.js — 游戏状态管理模块 (v1.4)
  * 依赖: Constants
  * 职责: 创建、获取、重置全局游戏状态，本地存储保存/加载
+ *
+ * v1.4: 新增 reputation（隐藏声望）、_peakReputation 替换 _peakFame
  */
 window.Game = window.Game || {};
 
@@ -15,7 +17,7 @@ window.Game.State = (function() {
     let state = null;
 
     /** 本地存储键名 */
-    const STORAGE_KEY = 'football-career-save';
+    const STORAGE_KEY = 'football-career-save-v1.4';
 
     /**
      * 创建全新的游戏状态对象（深拷贝初始模板 + 里程碑模板）
@@ -23,18 +25,17 @@ window.Game.State = (function() {
      */
     function create() {
         const s = {};
-        // 拷贝 INITIAL_STATE
         const tmpl = C.INITIAL_STATE;
         for (const key of Object.keys(tmpl)) {
             if (Array.isArray(tmpl[key])) {
-                s[key] = tmpl[key].slice(); // 浅拷贝数组（timeline 条目为对象但不可变）
+                s[key] = tmpl[key].slice();
             } else if (typeof tmpl[key] === 'object' && tmpl[key] !== null) {
                 s[key] = Object.assign({}, tmpl[key]);
             } else {
                 s[key] = tmpl[key];
             }
         }
-        // 深拷贝 timeline（每个条目是独立对象）
+        // 深拷贝 timeline
         s.timeline = tmpl.timeline.map(function(entry) {
             return Object.assign({}, entry);
         });
@@ -70,7 +71,6 @@ window.Game.State = (function() {
      */
     function save() {
         try {
-            // 保存时移除 pendingEvent（包含函数，无法序列化），只保存事件ID
             const stateToSave = Object.assign({}, state);
             if (stateToSave.pendingEvent) {
                 stateToSave._pendingEventId = stateToSave.pendingEvent.id;
@@ -82,7 +82,7 @@ window.Game.State = (function() {
                 state: stateToSave
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
-            console.log('[State] 游戏进度已保存');
+            console.log('[State] 游戏进度已保存 (v1.4)');
             return true;
         } catch (e) {
             console.error('[State] 保存失败:', e);
@@ -102,8 +102,8 @@ window.Game.State = (function() {
             const saveData = JSON.parse(saved);
             if (!saveData || !saveData.state) return false;
 
-            // 验证关键字段存在
-            const requiredKeys = ['physical', 'fame', 'team', 'mood', 'age', 'season'];
+            // 验证关键字段存在（v1.4新属性名）
+            const requiredKeys = ['wealth', 'ability', 'team', 'ambition', 'age', 'season'];
             for (const key of requiredKeys) {
                 if (saveData.state[key] === undefined) {
                     console.warn('[State] 存档数据不完整，缺少字段:', key);
@@ -112,6 +112,17 @@ window.Game.State = (function() {
             }
 
             state = saveData.state;
+
+            // 兼容旧存档：如果没有reputation则初始化为1
+            if (state.reputation === undefined) {
+                state.reputation = 1;
+                state._peakReputation = 1;
+            }
+            // 兼容旧存档：如果没有_peakReputation
+            if (state._peakReputation === undefined) {
+                state._peakReputation = state.reputation || 1;
+            }
+
             console.log('[State] 游戏进度已加载，存档时间:', new Date(saveData.timestamp).toLocaleString());
             return true;
         } catch (e) {
@@ -151,7 +162,7 @@ window.Game.State = (function() {
                 timestamp: saveData.timestamp,
                 age: saveData.state.age,
                 season: saveData.state.season,
-                fame: saveData.state.fame
+                reputation: saveData.state.reputation
             };
         } catch (e) {
             return null;

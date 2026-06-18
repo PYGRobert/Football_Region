@@ -1,7 +1,9 @@
 /**
- * icons.js — Twemoji图标管理模块
- * 使用本地存储的Twemoji PNG图片，确保跨平台一致性
+ * icons.js — 图标管理模块 (v1.4)
+ * 使用本地存储的PNG图片，确保跨平台一致性
  * 职责：图标映射、emoji替换、图标预加载
+ *
+ * v1.4: 新四属性图标(财富/能力/团队/野心)、结局图标更新、声望等级图标
  */
 window.Game = window.Game || {};
 
@@ -98,25 +100,51 @@ window.Game.Icons = (function() {
         'team_strategy': 'puzzle.png',
         'fan_interaction': 'speech.png',
         'training_innovation': 'lightbulb.png',
-        'international_experience': 'americas.png'
+        'international_experience': 'americas.png',
+        'locker_room_1': 'speaking.png',
+        'locker_room_2': 'swords.png',
+        'brand_deal': 'diamond.png',
+        'investment_opp': 'bank.png',
+        'skill_training': 'dart.png',
+        'social_media_hype': 'phone.png',
+        'minor_injury': 'bandage.png',
+        'charity_foundation': 'heart.png',
+        'agent_demand': 'briefcase.png',
+        'offseason_plan': 'sun.png',
+        'youth_academy_visit': 'baby.png',
+        'tactical_dispute': 'puzzle.png'
     };
 
-    // ==================== 结局原因 → 本地文件名映射 ====================
+    // ==================== 结局原因 → 本地文件名映射 (v1.4) ====================
 
     var ENDING_FILE_MAP = {
-        'physical_min': 'leg.png',
-        'team_min': 'prohibited.png',
-        'fame_min': 'ghost.png',
-        'mood_min': 'pensive.png',
-        'physical_max': 'muscle.png',
-        'fame_max': 'camera.png',
-        'team_max': 'handshake.png',
-        'mood_max': 'wine.png',
-        'legend': 'crown.png',
-        'star': 'star.png',
-        'loyal_end': 'house.png',
-        'ambition_end': 'swords.png',
-        'age': 'hourglass.png'
+        // 新四属性极端结局
+        'wealth_min': 'money_wings.png',      // 一贫如洗
+        'wealth_max': 'diamond.png',           // 初心蒙尘
+        'ability_min': 'bandage.png',          // 力不从心
+        'ability_max': 'dart.png',             // 众矢之的
+        'team_min': 'prohibited.png',          // 团队毒瘤
+        'team_max': 'handshake.png',           // 工兵改造
+        'ambition_min': 'sleeping.png',        // 无人在意
+        'ambition_max': 'crown.png',           // 众叛亲离
+        // 隐藏结局
+        'wonderkid': 'hourglass.png',          // 伤仲永 — 格策
+        'club_legend': 'house.png',            // 球队名宿 — 瓦尔迪
+        'ballon_dor': 'trophy.png',            // 球王 — 梅西
+        // 正常退役
+        'age': 'hourglass.png',
+        // 球员模板图标（13位）
+        'ali': 'pensive.png',                  // 阿里
+        'park': 'shield.png',                  // 朴智星
+        'balotelli': 'confetti.png',            // 巴洛特利
+        'neymar': 'soccer.png',               // 内马尔
+        'ronaldinho': 'party.png',             // 罗纳尔迪尼奥
+        'beckham': 'star.png',                 // 贝克汉姆
+        'mbappe': 'prohibited.png',            // 姆巴佩
+        'ronaldo': 'muscle.png',               // C罗
+        'gotze': 'pensive.png',                // 格策
+        'vardy': 'camp.png',                   // 瓦尔迪
+        'messi': 'crown.png'                   // 梅西
     };
 
     // ==================== Emoji字符 → 本地文件名映射 ====================
@@ -124,51 +152,52 @@ window.Game.Icons = (function() {
 
     var EMOJI_TO_FILE = {
         // UI元素
-        '👈': 'arrow_left.png',   // 👈
-        '👉': 'arrow_right.png',  // 👉
-        '🔒': 'lock.png',         // 🔒
-        '📅': 'calendar.png',     // 📅
-        // 属性图标
-        '💪': 'muscle.png',       // 💪
-        '⭐': 'star.png',               // ⭐
-        '🤝': 'handshake.png',    // 🤝
-        '❤️': 'heart.png',        // ❤️
-        '❤': 'heart.png',              // ❤ (无变体)
-        '❓': 'thinking.png',           // ❓
+        '👈': 'arrow_left.png',
+        '👉': 'arrow_right.png',
+        '🔒': 'lock.png',
+        '📅': 'calendar.png',
+        // v1.4 新属性图标
+        '💰': 'money.png',        // 💰 财富
+        '⚽': 'soccer.png',        // ⚽ 能力
+        '🤝': 'handshake.png',    // 🤝 团队
+        '🎯': 'dart.png',         // 🎯 野心
+        '⭐': 'star.png',         // ⭐ 声望
+        '💪': 'muscle.png',
+        '❤️': 'heart.png',
+        '❤': 'heart.png',
+        '❓': 'thinking.png',
         // 常用图标
-        '🏆': 'trophy.png',       // 🏆
-        '⚽': 'soccer.png',             // ⚽
-        '🏐': 'camp.png',         // 🏠 → house (但这里用camp代替)
+        '🏆': 'trophy.png',
+        '🏐': 'camp.png',
         // 里程碑文本中的emoji
-        '🏠': 'house.png',        // 🏠
-        '🔥': 'confetti.png',     // 🔥
-        '🕊️': 'palms.png',        // 🕊️ → 和平鸽用palms替代
-        '🕊': 'palms.png',        // 🕊 (无变体)
-        '⚔️': 'swords.png',       // ⚔️
-        '🌍': 'globe.png',        // 🌍
-        '🧠': 'lightbulb.png',    // 🧠
-        '🎖': 'medal.png',        // 🎖️
-        '🚀': 'airplane.png',     // 🚀
-        '🇨🇳': 'china.png', // 🇨🇳
-        '🎩': 'top_hat.png',      // 🎩
-        '👑': 'crown.png',        // 👑
-        '📖': 'book.png',         // 📖
-        '🌟': 'glowing_star.png', // 🌟
-        '💎': 'diamond.png',      // 💎
-        '📢': 'loudspeaker.png',  // 📢
-        '🎯': 'dart.png',         // 🎯
-        '👨‍🏫': 'teacher.png',     // 👨‍🏫 (ZWJ: 教练)
-        '💸': 'money_wings.png',  // 💸
-        '📰': 'newspaper.png',    // 📰
-        '📞': 'phone.png',        // 📞
-        '✈️': 'airplane.png',     // ✈️
-        '✈': 'airplane.png',      // ✈
-        '🗣️': 'speaking.png',     // 🗣️
-        '🗣': 'speaking.png',     // 🗣
-        '📈': 'chart.png',        // 📈
-        '🏦': 'bank.png',         // 🏦
-        '📄': 'document.png',     // 📄
-        '🤸': 'muscle.png'        // 🤸 (fallback)
+        '🏠': 'house.png',
+        '🔥': 'confetti.png',
+        '🕊️': 'palms.png',
+        '🕊': 'palms.png',
+        '⚔️': 'swords.png',
+        '🌍': 'globe.png',
+        '🧠': 'lightbulb.png',
+        '🎖': 'medal.png',
+        '🚀': 'airplane.png',
+        '🇨🇳': 'china.png',
+        '🎩': 'top_hat.png',
+        '👑': 'crown.png',
+        '📖': 'book.png',
+        '🌟': 'glowing_star.png',
+        '💎': 'diamond.png',
+        '📢': 'loudspeaker.png',
+        '👨‍🏫': 'teacher.png',
+        '💸': 'money_wings.png',
+        '📰': 'newspaper.png',
+        '📞': 'phone.png',
+        '✈️': 'airplane.png',
+        '✈': 'airplane.png',
+        '🗣️': 'speaking.png',
+        '🗣': 'speaking.png',
+        '📈': 'chart.png',
+        '🏦': 'bank.png',
+        '📄': 'document.png',
+        '🤸': 'muscle.png'
     };
 
     // ==================== 图片HTML生成 ====================
@@ -226,12 +255,31 @@ window.Game.Icons = (function() {
     function getStatIcon(name, size) {
         size = size || 16;
         var statFiles = {
-            'physical': 'muscle.png',
-            'fame': 'star.png',
+            'wealth': 'money.png',
+            'ability': 'soccer.png',
             'teamwork': 'handshake.png',
-            'mood': 'heart.png'
+            'ambition': 'dart.png'
         };
         var filename = statFiles[name] || 'thinking.png';
+        return createLocalImg(filename, size);
+    }
+
+    /**
+     * 获取声望等级图标
+     * @param {string} levelKey - 等级key 'unknown'|'minor'|'national'|'continental'|'world'
+     * @param {number} [size=16] - 图标大小
+     * @returns {string} img标签HTML
+     */
+    function getReputationIcon(levelKey, size) {
+        size = size || 16;
+        var levelIcons = {
+            'unknown': 'ghost.png',
+            'minor': 'star.png',
+            'national': 'glowing_star.png',
+            'continental': 'globe.png',
+            'world': 'crown.png'
+        };
+        var filename = levelIcons[levelKey] || 'star.png';
         return createLocalImg(filename, size);
     }
 
@@ -369,6 +417,7 @@ window.Game.Icons = (function() {
         getEventIconById: getEventIconById,
         getEndingIcon: getEndingIcon,
         getStatIcon: getStatIcon,
+        getReputationIcon: getReputationIcon,
         // UI便捷方法
         getArrowLeft: getArrowLeft,
         getArrowRight: getArrowRight,
